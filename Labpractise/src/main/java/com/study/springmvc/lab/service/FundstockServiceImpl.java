@@ -1,6 +1,7 @@
 package com.study.springmvc.lab.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -61,6 +62,12 @@ public class FundstockServiceImpl implements FundstockService {
 	@Override
 	public int Limit() {
 		return fundstockDao.LIMIT;
+	}
+
+	@Override
+	public Map<String, Integer> getMapgroup() {
+		
+		return fundstockDao.getGroupMap();
 	}
 	
 	

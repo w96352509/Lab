@@ -13,16 +13,109 @@
 		href="https://unpkg.com/purecss@2.0.6/build/pure-min.css"/>
 <meta charset="UTF-8">
 <title>Fundstock</title>
-<script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="${ pageContext.request.contextPath }/js/util.js"></script>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
   function updateFundstock(sid){
      document.getElementById('fundstock').action='/Labpractise/mvc/lab/fundstock/' + sid;
      document.getElementById('fundstock').submit();
   }
+  
+  
   function deleteFundstock(sid){
     document.getElementById('_method').value = 'DELETE';
     updateFundstock(sid);
   }
-  </script>
+  
+	
+      google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart);
+
+      function drawChart() {
+		  drawChart(1);
+		  drawStockChart('^TWII');
+	   }
+function drawStockChart(symbol) {
+		  $.get("${ pageContext.request.contextPath }/mvc/lab/price/histquotes/" + symbol, function(quotes, status) {
+			  //console.log("quotes:" + quotes);
+			  console.log("status:" + status);
+			  drawChartHist(symbol, quotes);
+		  });
+	  }
+	  
+	  function drawChartHist(symbol, quotes) {
+		  // 建立 data 欄位
+		  var data =  new google.visualization.DataTable();
+		  // 定義欄位(固定)
+		  data.addColumn('string', 'Date');
+		  data.addColumn('number', 'High');
+		  data.addColumn('number', 'Open');
+		  data.addColumn('number', 'Close');
+		  data.addColumn('number', 'Low');
+		  data.addColumn('number', 'AdjClose');
+		  data.addColumn('number', 'Volumn');
+		  // 加入資料
+		  $.each(quotes, function (i, item) {
+              var array = [getMD(quotes[i].date), quotes[i].high, quotes[i].open, quotes[i].close, quotes[i].low, quotes[i].adjClose, quotes[i].volume];
+              data.addRow(array);
+          });
+		  console.log("data:" + data);
+		  // 設定 chart 參數
+		  var options = {
+			title: symbol + ' 日K線圖',
+            legend: 'none',
+            vAxes: [
+            	{},
+                {minValue: 1, maxValue: 6000000}
+            ],
+            series: {
+            	1: {targetAxisIndex: 0, type: 'line', color: '#e7711b'},
+            	2: {targetAxisIndex: 1, type: 'bars', color: '#cccccc'}
+            },
+            	candlestick: {
+                	fallingColor: {strokeWidth: 0, fill: '#0f9d58'}, // green
+                    risingColor: {strokeWidth: 0, fill: '#a52714'}   // red
+             },
+             chartArea: {left: 50}
+         };
+		  // 產生 chart 物件
+		  var chart = new google.visualization.CandlestickChart(document.getElementById('stockchart'));
+		  // 繪圖
+		  chart.draw(data, options);
+	  }
+
+//圖形部分
+      function drawChart(chartId) {
+
+        var data = google.visualization.arrayToDataTable([
+          ['symbol', 'share'],
+          <c:forEach var= "map" items="${groupMap}" >
+            ['${map.key}', ${map.value}],
+          </c:forEach>
+        ]);
+
+        var options = {
+          title: 'stock info'
+          
+        };
+
+        var chart = new google.visualization.BarChart(document.getElementById('chart'));
+        switch(chartId) {
+        	case 2:
+        		chart = new google.visualization.PieChart(document.getElementById('chart'));
+        		break;
+        	case 3:
+        		chart = new google.visualization.ColumnChart(document.getElementById('chart'));
+        		break;
+        	case 4:
+        		chart = new google.visualization.LineChart(document.getElementById('chart'));
+        		break;	
+        }
+        
+        chart.draw(data, options);
+      }
+    </script>
 </head>
 <body style="padding: 15px">
    <table>
@@ -86,7 +179,9 @@
                     ${fundstock.sid}
                     </a>
                     </td>
-                    <td>${fundstock.symbol}</td>
+                    <td>
+                    <a href="#" onclick="drawStockChart('${ fundstock.symbol }')">${ fundstock.symbol }</a>
+                    </td>
                     <td>${fundstock.share}</td>
                     <td>${fundstock.fund.fname}</td>
                     <td><button type="button" onclick="deleteFundstock(${fundstock.sid})" class="pure-button pure-button-primary">
@@ -98,7 +193,34 @@
               </table>
            </fieldset>
          </form>
-     </tr>
- </table>
+        </td>
+        <!-- Fundstock chart -->
+        <td valign="top" >
+         <form class="pure-form">
+           <fieldset>
+           <legend>
+             Fundstock Chart |
+			 <a href="#" onclick="drawChart(1)">bar</a> |
+			 <a href="#" onclick="drawChart(2)">pie</a> |
+			 <a href="#" onclick="drawChart(3)">column</a> |
+			 <a href="#" onclick="drawChart(4)">line</a>
+		   </legend>
+           <div id="chart" style="width: 500px; height: 300px;"></div>
+           </fieldset>
+         </form>
+        </td>
+        <tr>
+			<td colspan="3" valign="top">
+				<form class="pure-form">
+					<fieldset>
+						<legend>
+							Fundstock Chart | <a href="#" onclick="drawStockChart('^TWII')">加權股價</a>
+						</legend>
+						<div id="stockchart" style="width: 1500px; height: 500px;"></div>
+					</fieldset>
+				</form>
+			</td>
+		</tr>
+</table>
 </body>
 </html>

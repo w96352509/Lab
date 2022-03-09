@@ -1,7 +1,13 @@
 package com.study.springmvc.lab.repository;
 
 import java.sql.ResultSet;
+import java.util.IntSummaryStatistics;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.summingInt;
 
 import org.simpleflatmapper.jdbc.spring.JdbcTemplateMapperFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,89 +25,83 @@ public class FundstockDaoImpl implements FundstockDao {
 
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
-	
+
 	@Override
 	public List<Fundstock> queryAll() {
 		return queryAllcase03();
 	}
-	
+
 	private List<Fundstock> queryAllcase01() {
 		String sql = "select s.sid , s.fid , s.symbol , s.share from fundstock s";
-		return jdbcTemplate.query(sql,  new BeanPropertyRowMapper<Fundstock>(Fundstock.class));
+		return jdbcTemplate.query(sql, new BeanPropertyRowMapper<Fundstock>(Fundstock.class));
 	}
-	
-	private List<Fundstock> queryAllcase02(){
+
+	private List<Fundstock> queryAllcase02() {
 		String sql = "select s.sid , s.fid , s.symbol , s.share from fundstock s";
-		RowMapper<Fundstock> rm  = (ResultSet rs, int rowNum)->{
+		RowMapper<Fundstock> rm = (ResultSet rs, int rowNum) -> {
 			Fundstock fundstock = new Fundstock();
 			fundstock.setFid(rs.getInt("fid"));
 			fundstock.setSid(rs.getInt("sid"));
 			fundstock.setSymbol(rs.getString("symbol"));
 			fundstock.setShare(rs.getInt("share"));
-			String sql2  = "select f.fid , f.fname , f.createtime from fund f";
+			String sql2 = "select f.fid , f.fname , f.createtime from fund f";
 			List<Fund> funds = jdbcTemplate.query(sql2, new BeanPropertyRowMapper<Fund>(Fund.class));
 			fundstock.setFund(funds.get(0));
 			return fundstock;
 		};
-		    return jdbcTemplate.query(sql, rm);
+		return jdbcTemplate.query(sql, rm);
 	}
 
-	private List<Fundstock> queryAllcase03(){
+	private List<Fundstock> queryAllcase03() {
 		String sql = "select s.sid, s.fid, s.symbol, s.share , "
-				   + "f.fid as fund_fid , f.fname as fund_fname , f.createtime as fund_createtime  "
-				   + "from fundstock s left join fund f " + "on f.fid = s.fid";
-		ResultSetExtractor<List<Fundstock>> rs = JdbcTemplateMapperFactory
-				                           .newInstance()
-				                           .addKeys("sid")
-				                           .newResultSetExtractor(Fundstock.class);
+				+ "f.fid as fund_fid , f.fname as fund_fname , f.createtime as fund_createtime  "
+				+ "from fundstock s left join fund f " + "on f.fid = s.fid";
+		ResultSetExtractor<List<Fundstock>> rs = JdbcTemplateMapperFactory.newInstance().addKeys("sid")
+				.newResultSetExtractor(Fundstock.class);
 		return jdbcTemplate.query(sql, rs);
 	}
-	
+
 	@Override
 	public List<Fundstock> querypage(int offset) {
 		String sql = "select s.sid, s.fid, s.symbol, s.share , "
-				   + "f.fid as fund_fid , f.fname as fund_fname , f.createtime as fund_createtime  "
-				   + "from fundstock s left join fund f " + "on f.fid = s.fid";
+				+ "f.fid as fund_fid , f.fname as fund_fname , f.createtime as fund_createtime  "
+				+ "from fundstock s left join fund f " + "on f.fid = s.fid";
 		sql += String.format(" limit %d offset %d ", FundstockDao.LIMIT, offset);
-		ResultSetExtractor<List<Fundstock>> rs = 
-				JdbcTemplateMapperFactory
-                .newInstance()
-                .addKeys("sid")
-                .newResultSetExtractor(Fundstock.class);
+		ResultSetExtractor<List<Fundstock>> rs = JdbcTemplateMapperFactory.newInstance().addKeys("sid")
+				.newResultSetExtractor(Fundstock.class);
 		return jdbcTemplate.query(sql, rs);
 	}
 
 	@Override
 	public Fundstock get(int sid) {
 		String sql = "select s.sid , s.fid , s.symbol , s.share from fundstock s where s.sid=? ";
-		Fundstock fundstock = jdbcTemplate.queryForObject(
-				sql, 
-				new BeanPropertyRowMapper<Fundstock>(Fundstock.class),
+		Fundstock fundstock = jdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<Fundstock>(Fundstock.class),
 				sid);
 		String sql2 = "select f.fid , f.fname , f.createtime from fund f where f.fid=?";
-		Fund fund =jdbcTemplate.queryForObject(sql2, new BeanPropertyRowMapper<Fund>(Fund.class),fundstock.getFid());
+		Fund fund = jdbcTemplate.queryForObject(sql2, new BeanPropertyRowMapper<Fund>(Fund.class), fundstock.getFid());
 		fundstock.setFund(fund);
-		return fundstock ;
+		return fundstock;
 	}
 
 	@Override
 	public int add(Fundstock fundstock) {
 		String sql = "insert into fundstock(fid,symbol,share) values(?,?,?)";
-		int ronumber = jdbcTemplate.update(sql,fundstock.getFid() , fundstock.getSymbol() , fundstock.getShare());
+		int ronumber = jdbcTemplate.update(sql, fundstock.getFid(), fundstock.getSymbol(), fundstock.getShare());
 		return ronumber;
 	}
 
 	@Override
 	public int delete(int sid) {
 		String sql = "delete from fundstock where sid=?";
-		int rownumber = jdbcTemplate.update(sql , sid);
+		int rownumber = jdbcTemplate.update(sql, sid);
 		return rownumber;
 	}
 
 	@Override
 	public int update(Fundstock fundstock) {
 		String sql = "update fundstock set fid=?, symbol=?, share=? where sid=?";
-		int rowcount = jdbcTemplate.update(sql, fundstock.getFid(), fundstock.getSymbol(), fundstock.getShare(), fundstock.getSid());
+		int rowcount = jdbcTemplate.update(sql, fundstock.getFid(), fundstock.getSymbol(), fundstock.getShare(),
+				fundstock.getSid());
 		return rowcount;
 	}
 
@@ -109,6 +109,18 @@ public class FundstockDaoImpl implements FundstockDao {
 	public int count() {
 		String sql = "select count(*) from fundstock s;";
 		return jdbcTemplate.queryForObject(sql, Integer.class);
+	}
+
+	@Override
+	public Map<String, Integer> getGroupMap() {
+		List<Fundstock> fundstocks = queryAll();
+		Map<String, Integer> status = fundstocks.stream()
+				.collect(groupingBy(Fundstock::getSymbol, summingInt(Fundstock::getShare)));
+		Map<String, Integer> statAndSort = new LinkedHashMap<>();
+		status.entrySet().stream().sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+				.forEachOrdered(e -> statAndSort.put(e.getKey(), e.getValue()));
+		status = statAndSort;
+		return status;
 	}
 
 }

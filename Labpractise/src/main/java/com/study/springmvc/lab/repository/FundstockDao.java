@@ -1,6 +1,7 @@
 package com.study.springmvc.lab.repository;
 
 import java.util.List;
+import java.util.Map;
 
 import com.study.springmvc.lab.entity.Fundstock;
 
@@ -22,5 +23,6 @@ public interface FundstockDao {
 	  int update(Fundstock fundstock);
 	//總比數
 	  int count();
-	
+	//getGroupMap
+	  Map<String, Integer> getGroupMap();
 }

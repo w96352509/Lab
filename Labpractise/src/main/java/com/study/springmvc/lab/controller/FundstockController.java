@@ -1,6 +1,7 @@
 package com.study.springmvc.lab.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -54,6 +55,7 @@ public class FundstockController {
 		model.addAttribute("fundstocks" , fundstocks);
 		model.addAttribute("count" , fundstockService.count());
 		model.addAttribute("pageTotalCount" , pageTotalCount);
+		model.addAttribute("groupMap", getGroupMap());
 		return "lab/Fundstock";
 	}
 	
@@ -69,6 +71,7 @@ public class FundstockController {
 		model.addAttribute("fundstock"  , fundstock );
 		model.addAttribute("count" , fundstockService.count());
 		model.addAttribute("pageTotalCount" , pageTotalCount);
+		model.addAttribute("groupMap", getGroupMap());
 		return "lab/Fundstock";
 	}
 	
@@ -88,6 +91,10 @@ public class FundstockController {
 	public String delete(@PathVariable("sid") int sid) {
 		fundstockService.delete(sid);
 		return "redirect:./";
+	}
+	
+	private Map<String, Integer> getGroupMap() {
+		return fundstockService.getMapgroup();
 	}
 	
 }

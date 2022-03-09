@@ -1,6 +1,7 @@
 package com.study.springmvc.lab.service;
 
 import java.util.List;
+import java.util.Map;
 
 import com.study.springmvc.lab.entity.Fundstock;
 
@@ -22,5 +23,7 @@ public interface FundstockService {
 	  int update(Fundstock fundstock);
 	//
 	  int count();
+	  
+	  Map<String, Integer> getMapgroup();
 	
 }
